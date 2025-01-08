@@ -1,0 +1,29 @@
+http {
+   # Настройка upstream для балансировки нагрузки
+   upstream backend_servers {
+       server backend1.example.com;
+       server backend2.example.com;
+       server backend3.example.com;
+   }
+
+   # Определение лимита запросов
+   limit_req_zone $binary_remote_addr zone=one:10m rate=10r/m;
+
+   server {
+       listen 80;
+
+       location / {
+           # Применение лимита запросов
+           limit_req zone=one burst=5 nodelay;
+       }
+
+       # Обработка ошибок
+       error_page 429 = @error429;
+
+       location @error429 {
+           default_type application/json;
+           add_header Content-Type application/json;
+           return 429 '{"error": "Too Many Requests"}';
+       }
+   }
+}
